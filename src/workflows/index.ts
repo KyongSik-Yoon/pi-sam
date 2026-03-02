@@ -1,4 +1,4 @@
-export type { WorkflowContext, PhaseResult, ConfirmResult } from "./types.js";
+export type { WorkflowContext, PhaseResult, ConfirmResult, PhaseProgress, WorkflowProgressCallback } from "./types.js";
 export { runAutopilot } from "./autopilot.js";
 export { runPlanExecute } from "./plan-execute.js";
-export { runSpecialistReview, runMultiReview } from "./specialists.js";
+export { runSpecialistReview, runSpecialistReviewByName, runMultiReview } from "./specialists.js";

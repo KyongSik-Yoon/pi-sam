@@ -7,7 +7,8 @@
 		"pi-sam": "./dist/cli.js"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && npm run copy-agents",
+		"copy-agents": "mkdir -p dist/agents/bundled && cp src/agents/bundled/*.md dist/agents/bundled/",
 		"dev": "tsx src/cli.ts",
 		"start": "node dist/cli.js"
 	},

@@ -91,7 +91,7 @@ export GEMINI_API_KEY=...
 
 ### `/review <specialty>`
 
-전문가 코드 리뷰를 실행합니다.
+전문가 코드 리뷰를 실행합니다. 에이전트 디스커버리를 통해 사용 가능한 리뷰어를 자동으로 감지합니다.
 
 ```
 > /review security        # 보안 리뷰
@@ -100,6 +100,24 @@ export GEMINI_API_KEY=...
 > /review performance     # 성능 리뷰
 > /review all             # 모든 리뷰 병렬 실행
 ```
+
+커스텀 리뷰어를 추가하면 자동으로 `/review` 옵션에 나타납니다.
+
+### 실시간 프로그레스
+
+워크플로우 실행 중 각 단계의 진행 상황이 TUI에 실시간으로 표시됩니다:
+- 현재 실행 중인 단계와 에이전트 이름
+- 사용된 도구 수와 경과 시간
+- 완료/실패 상태
+
+### 구조화된 리뷰 결과
+
+리뷰 결과는 severity 별로 구조화되어 표시됩니다:
+- 🔴 **critical** — 즉시 수정 필요
+- 🟠 **high** — 높은 우선순위
+- 🟡 **medium** — 중간 우선순위
+- 🔵 **low** — 낮은 우선순위
+- ⚪ **info** — 참고 사항
 
 ## 커스텀 도구
 
@@ -127,6 +145,60 @@ export GEMINI_API_KEY=...
 - Docker / Kubernetes 설정
 - 멀티모듈 구조
 
+## 커스텀 에이전트
+
+에이전트 정의를 `.md` 파일로 작성하여 워크플로우를 확장할 수 있습니다.
+
+### 에이전트 정의 파일 형식
+
+```markdown
+---
+name: reviewer-kotlin
+description: Kotlin idiom review
+tools: readonly
+thinkingLevel: medium
+specialty: kotlin
+---
+
+## Role: Kotlin Reviewer
+Kotlin 코드의 관용적 패턴과 컨벤션을 리뷰합니다.
+
+### Output Format
+**Status:** PASS or FAIL
+**Findings:**
+- [severity] [File:Line] Description
+```
+
+### Frontmatter 필드
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `name` | string | 에이전트 이름 (필수) |
+| `description` | string | 설명 |
+| `tools` | `"full"` \| `"readonly"` | 도구 접근 수준 |
+| `model` | string | 모델 오버라이드 (예: `anthropic/claude-haiku-3-5-20241022`) |
+| `thinkingLevel` | `"off"` \| `"low"` \| `"medium"` \| `"high"` | 사고 수준 |
+| `extractVerifyResult` | boolean | 검증 결과 자동 추출 |
+| `specialty` | string | 리뷰 전문 분야 (`/review` 커맨드에 자동 등록) |
+
+### 에이전트 디스커버리 경로
+
+우선순위 순 (나중이 우선):
+
+1. **번들드**: `src/agents/bundled/*.md` (8개 기본 에이전트)
+2. **사용자 레벨**: `~/.pi-sam/agent/agents/*.md`
+3. **프로젝트 레벨**: `.pi-sam/agents/*.md` (최우선)
+
+같은 이름의 에이전트는 우선순위가 높은 것이 덮어씁니다.
+
+### 에이전트별 모델 오버라이드
+
+비용 최적화를 위해 에이전트별로 다른 모델과 사고 수준을 지정할 수 있습니다:
+
+- **Explorer/Verifier**: `thinkingLevel: low` — 빠른 탐색/검증
+- **Planner/Executor**: `thinkingLevel: medium` — 균형 잡힌 실행
+- **Reviewer**: `thinkingLevel: medium` — 꼼꼼한 리뷰
+
 ## 프로젝트 구조
 
 ```
@@ -135,6 +207,19 @@ src/
   main.ts             # CLI 로직, 세션 생성, InteractiveMode/runPrintMode 실행
   config.ts           # 상수 (APP_NAME, VERSION, 경로)
   system-prompt.ts    # Kotlin/Ktor 특화 시스템 프롬프트
+  agents/
+    types.ts          # AgentDefinition, ReviewFinding, 파서
+    discovery.ts      # 에이전트 디스커버리 (bundled/user/project)
+    index.ts          # barrel export
+    bundled/          # 8개 기본 에이전트 .md 파일
+      explorer.md
+      planner.md
+      executor.md
+      verifier.md
+      reviewer-security.md
+      reviewer-test.md
+      reviewer-architecture.md
+      reviewer-performance.md
   tools/
     k8s-tool.ts       # kubectl 도구
     gradle-tool.ts    # Gradle 도구
@@ -145,9 +230,8 @@ src/
   extensions/
     workflow-extension.ts  # 워크플로우 슬래시 명령어 (/autopilot, /plan, /review)
   workflows/
-    types.ts          # 워크플로우 타입 정의
-    engine.ts         # 단계 실행 엔진, verify-fix 루프
-    prompts.ts        # 단계별 시스템 프롬프트
+    types.ts          # 워크플로우 타입 정의 (PhaseProgress 포함)
+    engine.ts         # 단계 실행 엔진, verify-fix 루프, 프로그레스 추적
     autopilot.ts      # 자율 실행 파이프라인
     plan-execute.ts   # 사용자 승인 파이프라인
     specialists.ts    # 전문가 리뷰
@@ -165,20 +249,32 @@ src/
                     ┌──────────▼──────────────────────────┐
                     │       Workflow Engine                │
                     │  (runPhase, runVerifyFixLoop)        │
+                    │  + Progress Tracking                │
+                    │  + Structured Review Results         │
                     └──────────┬──────────────────────────┘
-                               │ createAgentSession + SessionManager.inMemory()
+                               │
+                    ┌──────────▼──────────────────────────┐
+                    │     Agent Discovery                  │
+                    │  bundled/*.md → user → project       │
+                    └──────────┬──────────────────────────┘
+                               │ createAgentSession + per-agent model/thinking
               ┌────────────────┼────────────────┐
               ▼                ▼                ▼
         ┌──────────┐   ┌──────────┐   ┌──────────┐
         │ Explorer  │   │ Executor │   │ Verifier │  ...
-        │(read-only)│   │ (full)   │   │(read-only)│
+        │(readonly) │   │ (full)   │   │(readonly) │
+        │ low think │   │ med think│   │ low think │
         └──────────┘   └──────────┘   └──────────┘
          독립 세션        독립 세션       독립 세션
 ```
 
 각 워크플로우 단계는:
 - `SessionManager.inMemory()`로 생성된 임시 세션에서 실행
+- `.md` 파일에서 로드된 에이전트 정의 사용
+- 에이전트별 모델 및 thinking level 오버라이드
 - 단계별로 read-only 또는 full 도구 세트 할당
+- 실시간 프로그레스 추적 (tool count, 경과 시간)
+- 구조화된 리뷰 결과 파싱 (severity, file, line)
 - 완료 후 자동 dispose (에러 시에도 try/finally로 보장)
 - 이전 단계의 요약 텍스트가 다음 단계의 입력으로 전달
 
