@@ -19,7 +19,7 @@ pi-sam
 pi-sam "Ktor 라우팅 코드를 리뷰해줘"
 
 # 모델 및 사고 수준 지정
-pi-sam -m anthropic/claude-sonnet-4-20250514 -t high
+pi-sam -m anthropic/claude-sonnet-4-6 -t high
 
 # 파이프 입력 (print 모드)
 echo "analyze this" | pi-sam -p
@@ -32,7 +32,7 @@ pi-sam -c
 
 | 옵션 | 설명 |
 |------|------|
-| `-m, --model <model>` | 사용할 모델 (예: `anthropic/claude-opus-4-5`) |
+| `-m, --model <model>` | 사용할 모델 (예: `anthropic/claude-opus-4-6`) |
 | `-t, --thinking <level>` | 사고 수준: `off`, `low`, `medium`, `high` |
 | `-p, --print` | 비대화형 출력 모드 |
 | `-c, --continue` | 최근 세션 이어가기 |

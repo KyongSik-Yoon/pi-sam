@@ -3,6 +3,7 @@ import {
 	createCodingTools,
 	createReadOnlyTools,
 	SessionManager,
+	DefaultResourceLoader,
 } from "@mariozechner/pi-coding-agent";
 import type { WorkflowContext, PhaseConfig, PhaseResult } from "./types.js";
 
@@ -40,6 +41,17 @@ export async function runPhase(
 			? createCodingTools(ctx.cwd)
 			: createReadOnlyTools(ctx.cwd);
 
+	const resourceLoader = new DefaultResourceLoader({
+		cwd: ctx.cwd,
+		agentDir: ctx.agentDir,
+		noExtensions: true,
+		noSkills: true,
+		noPromptTemplates: true,
+		noThemes: true,
+		appendSystemPrompt: config.systemPrompt,
+	});
+	await resourceLoader.reload();
+
 	const { session } = await createAgentSession({
 		cwd: ctx.cwd,
 		agentDir: ctx.agentDir,
@@ -47,11 +59,9 @@ export async function runPhase(
 		modelRegistry: ctx.modelRegistry,
 		model: ctx.model,
 		thinkingLevel: ctx.thinkingLevel,
-		systemPrompt: config.systemPrompt,
 		tools,
 		customTools: [],
-		hooks: [],
-		skills: [], // Intentionally empty — sub-agents should be lightweight, no skill discovery
+		resourceLoader,
 		sessionManager: SessionManager.inMemory(ctx.cwd),
 	});
 

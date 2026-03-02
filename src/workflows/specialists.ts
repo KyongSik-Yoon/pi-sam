@@ -12,7 +12,7 @@ export async function runSpecialistReview(
 	specialty: Specialty,
 	scope: string,
 ): Promise<PhaseResult> {
-	const basePrompt = ctx.systemPrompt("");
+	const basePrompt = "";
 
 	const reviewPhase: PhaseConfig = {
 		name: "review",

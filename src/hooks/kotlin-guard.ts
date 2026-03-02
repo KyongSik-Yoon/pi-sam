@@ -1,4 +1,4 @@
-import type { HookFactory } from "@mariozechner/pi-coding-agent";
+import type { ExtensionFactory } from "@mariozechner/pi-coding-agent";
 
 const SENSITIVE_FILE_PATTERNS = [
 	/application-prod\.(conf|yml|yaml|properties)$/,
@@ -19,8 +19,8 @@ const DANGEROUS_BASH_PATTERNS = [
 	/\bgit\s+reset\s+--hard\b/,
 ];
 
-export const kotlinGuardHook: HookFactory = (pi) => {
-	pi.on("tool_call", async (event) => {
+export const kotlinGuardHook: ExtensionFactory = (pi) => {
+	pi.on("tool_call", async (event, _ctx) => {
 		const toolName = event.toolName;
 
 		// Block dangerous bash commands
@@ -40,7 +40,7 @@ export const kotlinGuardHook: HookFactory = (pi) => {
 
 		// Warn on sensitive file edits
 		if (toolName === "write" || toolName === "edit") {
-			const path = (event.input?.file_path ?? event.input?.path) as string | undefined;
+			const path = (event.input as Record<string, unknown>)?.path as string | undefined;
 			if (path) {
 				for (const pattern of SENSITIVE_FILE_PATTERNS) {
 					if (pattern.test(path)) {

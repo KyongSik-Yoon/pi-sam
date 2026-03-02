@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { CustomAgentTool } from "@mariozechner/pi-coding-agent";
+import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 
 const DockerParams = Type.Object({
 	command: Type.String({
@@ -15,14 +15,14 @@ const BLOCKED_PATTERNS = [
 	/\bimage\s+rm\b/,
 ];
 
-export function createDockerTool(cwd: string): CustomAgentTool<typeof DockerParams> {
+export function createDockerTool(cwd: string): ToolDefinition<typeof DockerParams> {
 	return {
 		name: "docker",
 		label: "Docker",
 		description:
 			"Execute Docker and docker-compose commands. Supports ps, logs, compose up/down/logs, build, images, inspect. Destructive commands (rm -f, prune) are blocked.",
 		parameters: DockerParams,
-		async execute(_toolCallId, params) {
+		async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
 			const cmd = params.command.trim();
 
 			if (BLOCKED_PATTERNS.some((pattern) => pattern.test(cmd))) {

@@ -16,7 +16,7 @@ export async function runPlanExecute(
 	task: string,
 	confirmFn: (plan: string) => Promise<ConfirmResult>,
 ): Promise<PhaseResult[]> {
-	const basePrompt = ctx.systemPrompt("");
+	const basePrompt = "";
 	const results: PhaseResult[] = [];
 
 	// Phase 1: Explore

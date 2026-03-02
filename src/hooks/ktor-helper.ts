@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import type { HookFactory } from "@mariozechner/pi-coding-agent";
+import type { ExtensionFactory } from "@mariozechner/pi-coding-agent";
 
 interface ProjectInfo {
 	type: "ktor" | "spring-boot" | "kotlin" | "java" | "unknown";
@@ -101,21 +101,21 @@ function formatProjectContext(info: ProjectInfo): string {
 	return lines.join("\n");
 }
 
-export function ktorHelperHook(cwd: string): HookFactory {
+export function ktorHelperHook(cwd: string): ExtensionFactory {
 	return (pi) => {
 		let contextInjected = false;
 
-		pi.on("agent_start", async () => {
+		pi.on("agent_start", async (_event, _ctx) => {
 			// Pre-detect on first agent start
 			contextInjected = false;
 		});
 
-		pi.on("turn_start", async () => {
+		pi.on("turn_start", async (_event, _ctx) => {
 			if (!contextInjected) {
 				const info = detectProject(cwd);
 				if (info.type !== "unknown") {
 					const context = formatProjectContext(info);
-					pi.send(`<project-context>\n${context}\n</project-context>`);
+					pi.sendUserMessage(`<project-context>\n${context}\n</project-context>`);
 				}
 				contextInjected = true;
 			}

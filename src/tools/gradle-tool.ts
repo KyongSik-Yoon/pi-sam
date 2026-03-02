@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { CustomAgentTool } from "@mariozechner/pi-coding-agent";
+import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 
 const GradleParams = Type.Object({
 	task: Type.String({
@@ -18,14 +18,14 @@ const GradleParams = Type.Object({
 	),
 });
 
-export function createGradleTool(cwd: string): CustomAgentTool<typeof GradleParams> {
+export function createGradleTool(cwd: string): ToolDefinition<typeof GradleParams> {
 	return {
 		name: "gradle",
 		label: "Gradle",
 		description:
 			"Run Gradle tasks for Kotlin/Java projects. Supports build, test, dependencies, and custom tasks. Automatically detects gradlew wrapper.",
 		parameters: GradleParams,
-		async execute(_toolCallId, params) {
+		async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
 			const { existsSync } = await import("fs");
 			const { join } = await import("path");
 

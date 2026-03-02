@@ -14,7 +14,7 @@ export async function runAutopilot(
 	ctx: WorkflowContext,
 	task: string,
 ): Promise<PhaseResult[]> {
-	const basePrompt = ctx.systemPrompt("");
+	const basePrompt = "";
 
 	const explorePhase: PhaseConfig = {
 		name: "explore",

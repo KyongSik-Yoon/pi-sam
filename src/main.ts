@@ -4,15 +4,15 @@ import { createInterface } from "readline";
 import {
 	createAgentSession,
 	createCodingTools,
-	discoverAuthStorage,
-	discoverModels,
-	type AuthStorage,
+	AuthStorage,
 	ModelRegistry,
 	SessionManager,
 	SettingsManager,
-	type CustomAgentTool,
-	type HookFactory,
+	DefaultResourceLoader,
+	type ToolDefinition,
+	type ExtensionFactory,
 } from "@mariozechner/pi-coding-agent";
+import { join } from "path";
 import { APP_NAME, VERSION, getAgentDir } from "./config.js";
 import { getSystemPrompt } from "./system-prompt.js";
 import { createK8sTool, createGradleTool, createDockerTool } from "./tools/index.js";
@@ -85,7 +85,7 @@ ${chalk.bold("Usage:")}
   ${APP_NAME} [options] [message...]
 
 ${chalk.bold("Options:")}
-  -m, --model <model>       Model to use (e.g. anthropic/claude-sonnet-4-20250514)
+  -m, --model <model>       Model to use (e.g. anthropic/claude-sonnet-4-6)
   -t, --thinking <level>    Thinking level: off, low, medium, high
   -p, --print               Non-interactive print mode
   -c, --continue            Continue most recent session
@@ -96,13 +96,14 @@ ${chalk.bold("Workflow Commands (interactive mode):")}
   /autopilot <task>              Autonomous explore→plan→execute→verify pipeline
   /plan <task>                   Plan with user approval, then execute→verify
   /review <security|test|architecture|performance|all>  Specialist review
+  /model                         Select model from available models
   /login                         OAuth login (Anthropic, GitHub Copilot, Gemini)
   /logout                        Remove saved credentials
 
 ${chalk.bold("Examples:")}
   ${APP_NAME}                                    Interactive mode
   ${APP_NAME} "Ktor 라우팅 코드를 리뷰해줘"       Single prompt
-  ${APP_NAME} -m anthropic/claude-opus-4-5 -t high  With specific model
+  ${APP_NAME} -m anthropic/claude-opus-4-6 -t high  With specific model
   echo "analyze this" | ${APP_NAME} -p             Piped input
 `);
 }
@@ -148,6 +149,47 @@ async function handleLoginCommand(
 		console.log(chalk.green(`Logged in to ${provider} successfully.`));
 	} catch (err: any) {
 		console.log(chalk.red(`Login failed: ${err.message ?? err}`));
+	}
+}
+
+async function handleModelCommand(
+	rl: ReturnType<typeof createInterface>,
+	session: Awaited<ReturnType<typeof createAgentSession>>["session"],
+): Promise<void> {
+	const PREFERRED_MODELS = ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"];
+	const all = session.modelRegistry.getAvailable();
+	const available = all.filter((m) => PREFERRED_MODELS.includes(m.id));
+	if (available.length === 0) {
+		console.log(chalk.yellow("No models available."));
+		return;
+	}
+
+	const currentId = session.model?.id;
+	console.log(chalk.bold("\nAvailable Models:"));
+	available.forEach((m, i) => {
+		const marker = m.id === currentId ? chalk.green(" (current)") : "";
+		console.log(`  ${i + 1}. ${chalk.dim(m.provider + "/")}${m.id}${marker}`);
+	});
+
+	const answer = await new Promise<string>((resolve) => {
+		rl.question(chalk.cyan(`Select model (1-${available.length}, q to cancel): `), resolve);
+	});
+
+	const trimmedAnswer = answer.trim();
+	if (!trimmedAnswer || trimmedAnswer === "q") return;
+
+	const idx = parseInt(trimmedAnswer, 10) - 1;
+	if (idx < 0 || idx >= available.length) {
+		console.log(chalk.yellow("Invalid selection."));
+		return;
+	}
+
+	const selected = available[idx];
+	try {
+		await session.setModel(selected);
+		console.log(chalk.green(`Model set to ${selected.provider}/${selected.id}`));
+	} catch (err: any) {
+		console.log(chalk.red(`Failed to set model: ${err.message ?? err}`));
 	}
 }
 
@@ -245,6 +287,11 @@ async function runInteractive(
 			continue;
 		}
 
+		if (trimmed === "/model") {
+			await handleModelCommand(rl, session);
+			continue;
+		}
+
 		if (isWorkflowCommand(trimmed)) {
 			await handleWorkflowCommand(trimmed, workflowCtx);
 			continue;
@@ -308,8 +355,8 @@ export async function main(args: string[]) {
 	const agentDir = getAgentDir();
 
 	// Auth & model registry
-	const authStorage = discoverAuthStorage(agentDir);
-	const modelRegistry = discoverModels(authStorage, agentDir);
+	const authStorage = AuthStorage.create(join(agentDir, "auth.json"));
+	const modelRegistry = new ModelRegistry(authStorage, join(agentDir, "models.json"));
 
 	// Resolve model
 	const model = parsed.model
@@ -329,17 +376,20 @@ export async function main(args: string[]) {
 	}
 
 	// Custom tools
-	const customTools: Array<{ tool: CustomAgentTool<any> }> = [
-		{ tool: createK8sTool(cwd) },
-		{ tool: createGradleTool(cwd) },
-		{ tool: createDockerTool(cwd) },
+	const customTools: ToolDefinition<any>[] = [
+		createK8sTool(cwd),
+		createGradleTool(cwd),
+		createDockerTool(cwd),
 	];
 
-	// Hooks
-	const hooks: Array<{ factory: HookFactory }> = [
-		{ factory: kotlinGuardHook },
-		{ factory: ktorHelperHook(cwd) },
-	];
+	// ResourceLoader with extensions
+	const resourceLoader = new DefaultResourceLoader({
+		cwd,
+		agentDir,
+		extensionFactories: [kotlinGuardHook, ktorHelperHook(cwd)],
+		appendSystemPrompt: getSystemPrompt(""),
+	});
+	await resourceLoader.reload();
 
 	// Create agent session
 	const { session, modelFallbackMessage } = await createAgentSession({
@@ -349,10 +399,9 @@ export async function main(args: string[]) {
 		thinkingLevel: parsed.thinking ?? "off",
 		authStorage,
 		modelRegistry,
-		systemPrompt: (base: string) => getSystemPrompt(base),
 		tools: createCodingTools(cwd),
 		customTools,
-		hooks,
+		resourceLoader,
 		sessionManager,
 	});
 
@@ -360,14 +409,71 @@ export async function main(args: string[]) {
 		console.error(chalk.red("No models available."));
 		console.error(chalk.yellow("\nSet an API key environment variable:"));
 		console.error("  ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, etc.");
-		process.exit(1);
+
+		// In non-interactive (print/pipe) mode, exit immediately
+		if (parsed.print || !process.stdin.isTTY) {
+			process.exit(1);
+		}
+
+		// Interactive mode: offer login before giving up
+		console.log(chalk.cyan("\nOr login via OAuth to continue:"));
+		const rl = createInterface({ input: process.stdin, output: process.stdout });
+
+		let loggedIn = false;
+		while (true) {
+			const answer = await new Promise<string>((resolve) => {
+				rl.question(chalk.cyan("Login now? (y/n): "), resolve);
+			});
+			const choice = answer.trim().toLowerCase();
+
+			if (choice === "n" || choice === "no") {
+				rl.close();
+				process.exit(1);
+			}
+			if (choice === "y" || choice === "yes") {
+				await handleLoginCommand(rl, authStorage);
+
+				// Re-discover models after login
+				modelRegistry.refresh();
+				const retryResult = await createAgentSession({
+					cwd,
+					agentDir,
+					model,
+					thinkingLevel: parsed.thinking ?? "off",
+					authStorage,
+					modelRegistry,
+					tools: createCodingTools(cwd),
+					customTools,
+					resourceLoader,
+					sessionManager,
+				});
+
+				if (retryResult.session.model) {
+					// Replace session references for the rest of main()
+					Object.assign(session, retryResult.session);
+					if (retryResult.modelFallbackMessage) {
+						console.log(chalk.yellow(retryResult.modelFallbackMessage));
+					}
+					loggedIn = true;
+					rl.close();
+					break;
+				}
+
+				console.error(chalk.red("Still no models available. Try another provider?"));
+				continue;
+			}
+		}
+
+		if (!loggedIn) {
+			process.exit(1);
+		}
 	}
 
 	if (modelFallbackMessage) {
 		console.log(chalk.yellow(modelFallbackMessage));
 	}
 
-	console.log(chalk.dim(`${APP_NAME} v${VERSION} | ${session.model.id}`));
+	console.log(chalk.dim(`${APP_NAME} v${VERSION} | ${session.model!.id}`));
 
 	// Build workflow context for slash commands
 	const workflowCtx: WorkflowContext = {
@@ -377,7 +483,6 @@ export async function main(args: string[]) {
 		modelRegistry,
 		model,
 		thinkingLevel: parsed.thinking ?? "off",
-		systemPrompt: (base: string) => getSystemPrompt(base),
 		onPhaseStart: (phase) => {
 			console.log(chalk.blue(`\n▶ Phase: ${phase}`));
 		},

@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { CustomAgentTool } from "@mariozechner/pi-coding-agent";
+import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 
 const K8sParams = Type.Object({
 	command: Type.String({
@@ -15,14 +15,14 @@ const K8sParams = Type.Object({
 
 const BLOCKED_COMMANDS = ["delete", "drain", "cordon", "taint", "replace --force"];
 
-export function createK8sTool(cwd: string): CustomAgentTool<typeof K8sParams> {
+export function createK8sTool(cwd: string): ToolDefinition<typeof K8sParams> {
 	return {
 		name: "k8s",
 		label: "Kubernetes",
 		description:
 			"Execute kubectl commands to inspect and manage Kubernetes resources. Supports get, describe, logs, top, and other read/inspect commands. Destructive commands (delete, drain) are blocked by default.",
 		parameters: K8sParams,
-		async execute(_toolCallId, params, signal) {
+		async execute(_toolCallId, params, signal, _onUpdate, _ctx) {
 			const cmd = params.command.trim();
 
 			// Block destructive commands
