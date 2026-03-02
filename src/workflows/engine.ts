@@ -34,8 +34,6 @@ export async function runPhase(
 	config: PhaseConfig,
 	input: string,
 ): Promise<PhaseResult> {
-	ctx.onPhaseStart?.(config.name);
-
 	const tools =
 		config.tools === "full"
 			? createCodingTools(ctx.cwd)
@@ -65,19 +63,6 @@ export async function runPhase(
 		sessionManager: SessionManager.inMemory(ctx.cwd),
 	});
 
-	// Stream output if callback provided
-	if (ctx.onOutput) {
-		const onOutput = ctx.onOutput;
-		session.subscribe((event) => {
-			if (
-				event.type === "message_update" &&
-				event.assistantMessageEvent.type === "text_delta"
-			) {
-				onOutput(event.assistantMessageEvent.delta);
-			}
-		});
-	}
-
 	let lastText: string;
 	try {
 		await session.prompt(input);
@@ -99,7 +84,6 @@ export async function runPhase(
 	}
 
 	const result: PhaseResult = { success, summary, phaseName: config.name };
-	ctx.onPhaseEnd?.(config.name, result);
 	return result;
 }
 

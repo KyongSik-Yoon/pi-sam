@@ -17,9 +17,6 @@ export interface WorkflowContext {
 	modelRegistry: ModelRegistry;
 	model?: Model<any>;
 	thinkingLevel: ThinkingLevel;
-	onPhaseStart?: (phase: WorkflowPhase) => void;
-	onPhaseEnd?: (phase: WorkflowPhase, result: PhaseResult) => void;
-	onOutput?: (delta: string) => void;
 }
 
 export interface PhaseConfig {
