@@ -51,21 +51,15 @@ export GEMINI_API_KEY=...
 
 ### OAuth 로그인
 
-인터랙티브 모드에서 `/login` 명령어로 OAuth 인증:
+인터랙티브 모드에서 `/login` 명령어로 OAuth 인증 (pi 내장 명령어):
 
 ```
 > /login
-OAuth Providers:
-  1. anthropic
-  2. github-copilot
-  3. google-gemini-cli
-  4. google-antigravity
-Select provider (1-4): 1
 ```
 
-브라우저에서 인증 후 코드를 입력하면 `~/.pi-sam/agent/auth.json`에 토큰이 저장됩니다. SDK가 토큰 리프레시를 자동 처리합니다.
+브라우저에서 인증 후 `~/.pi-sam/agent/auth.json`에 토큰이 저장됩니다. SDK가 토큰 리프레시를 자동 처리합니다.
 
-로그아웃: `/logout`
+모델 변경: `/model` 또는 `Ctrl+P`
 
 ## 워크플로우 명령어
 
@@ -93,10 +87,7 @@ Select provider (1-4): 1
 
 **흐름:** explore -> plan -> **사용자 승인** -> execute -> verify -> fix loop
 
-계획 단계 후 승인/거절/피드백을 선택할 수 있습니다:
-- `y` — 승인 후 실행
-- `e` — 피드백 추가 후 실행
-- `n` — 거절 (중단)
+계획 단계 후 승인/거절을 선택할 수 있습니다 (pi TUI 확인 대화상자).
 
 ### `/review <specialty>`
 
@@ -141,7 +132,7 @@ Select provider (1-4): 1
 ```
 src/
   cli.ts              # 진입점
-  main.ts             # CLI 로직, 세션 생성, 인터랙티브 루프
+  main.ts             # CLI 로직, 세션 생성, InteractiveMode/runPrintMode 실행
   config.ts           # 상수 (APP_NAME, VERSION, 경로)
   system-prompt.ts    # Kotlin/Ktor 특화 시스템 프롬프트
   tools/
@@ -151,6 +142,8 @@ src/
   hooks/
     kotlin-guard.ts   # 위험 명령어 차단
     ktor-helper.ts    # 프로젝트 컨텍스트 자동 주입
+  extensions/
+    workflow-extension.ts  # 워크플로우 슬래시 명령어 (/autopilot, /plan, /review)
   workflows/
     types.ts          # 워크플로우 타입 정의
     engine.ts         # 단계 실행 엔진, verify-fix 루프
@@ -158,7 +151,7 @@ src/
     autopilot.ts      # 자율 실행 파이프라인
     plan-execute.ts   # 사용자 승인 파이프라인
     specialists.ts    # 전문가 리뷰
-    index.ts          # 슬래시 명령어 디스패치
+    index.ts          # 워크플로우 re-exports
 ```
 
 ## 워크플로우 아키텍처
@@ -166,7 +159,7 @@ src/
 ```
                     ┌─────────────────────────────────────┐
                     │          Main Session                │
-                    │  (interactive loop, user I/O)       │
+                    │  (InteractiveMode, pi TUI)          │
                     └──────────┬──────────────────────────┘
                                │ /autopilot, /plan, /review
                     ┌──────────▼──────────────────────────┐
