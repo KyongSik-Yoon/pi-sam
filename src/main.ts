@@ -189,7 +189,7 @@ export async function main(args: string[]) {
 			ktorHelperHook(cwd),
 			workflowExtension(workflowCtx),
 		],
-		appendSystemPrompt: getSystemPrompt(""),
+		appendSystemPrompt: getSystemPrompt("", cwd),
 	});
 	await resourceLoader.reload();
 
