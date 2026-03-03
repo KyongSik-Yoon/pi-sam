@@ -36,4 +36,12 @@ describe("getPiSamHeaderLines", () => {
 			"모든 로고 라인에 블록 문자 포함 필요",
 		);
 	});
+
+	it("대문자 스타일 로고는 S 패턴이 명확해야 한다", () => {
+		const lines = getPiSamHeaderLines("0.1.0");
+		const [line1, line2] = lines;
+
+		assert.ok((line1 ?? "").includes("█▀▀"), "S 상단 패턴(█▀▀) 필요");
+		assert.ok((line2 ?? "").includes("▀▄▄"), "S 하단 패턴(▀▄▄) 필요");
+	});
 });
