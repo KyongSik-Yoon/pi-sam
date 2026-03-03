@@ -3,9 +3,9 @@ import { VERSION } from "../config.js";
 
 export function getPiSamHeaderLines(version: string): string[] {
 	return [
-		"    ◤◥",
-		"   ◢██◣",
-		"   ◥██◤",
+		"  █▀█ █     █▀ ▄▀█ █▄█",
+		"  █▀▀ █▄▄   ▄█ █▀█ █ ▀",
+		"  ▀   ▀▀▀   ▀▀ ▀ ▀ ▀  ",
 		"   pi-sam",
 		`   /help · /model · /resume  v${version}`,
 	];
