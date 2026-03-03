@@ -14,18 +14,24 @@ const SkillParams = Type.Object({
 	),
 });
 
-export function summarizeSkillToolResultForDisplay(details: unknown): string {
-	if (!details || typeof details !== "object") return "";
+export function summarizeSkillToolCallForDisplay(args: unknown): string {
+	if (!args || typeof args !== "object") return "";
 
-	const action = Reflect.get(details, "action");
+	const action = Reflect.get(args, "action");
+	if (action === "list") return "";
 	if (action !== "invoke") return "";
 
-	const skill = Reflect.get(details, "skill");
-	if (typeof skill === "string" && skill.trim().length > 0) {
-		return `Using skill: ${skill}`;
+	const skillName = Reflect.get(args, "name");
+	if (typeof skillName === "string" && skillName.trim().length > 0) {
+		return `Using skill: ${skillName.trim()}`;
 	}
 
 	return "Using skill";
+}
+
+export function summarizeSkillToolResultForDisplay(_details: unknown): string {
+	// renderCall이 이미 표시하므로 결과는 항상 비움
+	return "";
 }
 
 /**
@@ -55,7 +61,7 @@ export function createSkillTool(cwd: string, agentDir: string): ToolDefinition<t
 
 				const lines = ["# Available Skills", ""];
 				for (const s of skills) {
-					lines.push(`- ${s.name} | source: ${s.source} | path: ${s.filePath ?? "(unknown)"}`);
+					lines.push(`- ${s.name}`);
 				}
 
 				return {
@@ -88,26 +94,23 @@ export function createSkillTool(cwd: string, agentDir: string): ToolDefinition<t
 				};
 			}
 
-			const lines = [
-				`# Skill: ${skill.name}`,
-				"",
-				`- source: ${skill.source}`,
-				`- path: ${skill.filePath ?? "(unknown)"}`,
-			];
-
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: lines.join("\n"),
+						text: `Using skill: ${skill.name}`,
 					},
 				],
 				details: { action: "invoke", skill: skill.name, source: skill.source, path: skill.filePath },
 			};
 		},
-		renderResult(result) {
-			const summary = summarizeSkillToolResultForDisplay(result.details);
+		renderCall(args) {
+			const summary = summarizeSkillToolCallForDisplay(args);
 			return new Text(summary, 0, 0);
+		},
+		renderResult() {
+			// renderCall이 이미 표시하므로 결과는 비움
+			return new Text("", 0, 0);
 		},
 	};
 }
