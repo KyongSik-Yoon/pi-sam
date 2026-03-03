@@ -40,11 +40,8 @@ export function createSkillTool(cwd: string, agentDir: string): ToolDefinition<t
 
 				const lines = ["# Available Skills", ""];
 				for (const s of skills) {
-					const src = s.source === "bundled" ? "" : ` [${s.source}]`;
-					lines.push(`- **${s.name}**${src}: ${s.description}`);
+					lines.push(`- ${s.name} | source: ${s.source} | path: ${s.filePath ?? "(unknown)"}`);
 				}
-				lines.push("");
-				lines.push(`${skills.length} skills available. Use action "invoke" with a skill name to load it.`);
 
 				return {
 					content: [{ type: "text" as const, text: lines.join("\n") }],
@@ -76,14 +73,21 @@ export function createSkillTool(cwd: string, agentDir: string): ToolDefinition<t
 				};
 			}
 
+			const lines = [
+				`# Skill: ${skill.name}`,
+				"",
+				`- source: ${skill.source}`,
+				`- path: ${skill.filePath ?? "(unknown)"}`,
+			];
+
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: `# Skill: ${skill.name}\n\n${skill.content}`,
+						text: lines.join("\n"),
 					},
 				],
-				details: { action: "invoke", skill: skill.name, source: skill.source },
+				details: { action: "invoke", skill: skill.name, source: skill.source, path: skill.filePath },
 			};
 		},
 	};
