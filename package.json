@@ -2,20 +2,30 @@
 	"name": "pi-sam",
 	"version": "0.1.0",
 	"description": "Kotlin/Ktor backend specialized coding agent built on pi-mono",
+	"license": "MIT",
 	"type": "module",
+	"private": false,
 	"bin": {
 		"pi-sam": "./dist/cli.js"
 	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
 	"scripts": {
-		"build": "tsc && npm run copy-agents",
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc && npm run copy-agents",
 		"copy-agents": "mkdir -p dist/agents/bundled && cp src/agents/bundled/*.md dist/agents/bundled/",
 		"dev": "tsx src/cli.ts",
-		"start": "node dist/cli.js"
+		"start": "node dist/cli.js",
+		"pack:dry-run": "npm pack --dry-run",
+		"prepublishOnly": "npm run build"
 	},
 	"dependencies": {
-		"@mariozechner/pi-ai": "^0.55.3",
-		"@mariozechner/pi-coding-agent": "^0.55.3",
-		"@mariozechner/pi-tui": "^0.55.3",
+		"@mariozechner/pi-ai": "^0.55.4",
+		"@mariozechner/pi-coding-agent": "^0.55.4",
+		"@mariozechner/pi-tui": "^0.55.4",
 		"chalk": "^5.4.1"
 	},
 	"devDependencies": {
@@ -25,5 +35,8 @@
 	},
 	"engines": {
 		"node": ">=20.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

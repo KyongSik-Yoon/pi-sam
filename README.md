@@ -4,6 +4,21 @@ Kotlin/Ktor 백엔드 특화 코딩 에이전트. [pi-mono](https://github.com/m
 
 ## 설치
 
+### 사용자 설치 (npm)
+
+```bash
+npm i -g pi-sam
+pi-sam --help
+```
+
+또는 1회 실행:
+
+```bash
+npx pi-sam --help
+```
+
+### 개발 환경 설치
+
 ```bash
 npm install
 npm run build
@@ -283,6 +298,33 @@ src/
 - Node.js >= 20.0.0
 - pi-mono SDK (`@mariozechner/pi-coding-agent`, `@mariozechner/pi-ai`, `@mariozechner/pi-tui`)
 
+## npm 배포 (Maintainer)
+
+```bash
+# 1) 빌드
+npm run build
+
+# 2) 패키지 포함 파일 확인
+npm run pack:dry-run
+
+# 3) npm 로그인 (최초 1회)
+npm login
+
+# 4) 배포
+npm publish --access public
+```
+
+버전 업데이트 후 배포:
+
+```bash
+npm version patch   # 또는 minor / major
+npm publish
+```
+
+GitHub Actions 자동 배포도 지원합니다 (`.github/workflows/npm-publish.yml`):
+- 태그 푸시 (`v*`) 시 publish 실행
+- 저장소 Secret에 `NPM_TOKEN` 필요
+
 ## 라이선스
 
-Private
+MIT
