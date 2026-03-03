@@ -1,3 +1,9 @@
+```
+  ╔═╗ ╦   ╔═╗ ╔═╗ ╔╦╗
+  ╠═╝ ║ ─ ╚═╗ ╠═╣ ║║║
+  ╩   ╩   ╚═╝ ╩ ╩ ╩ ╩
+```
+
 # pi-sam
 
 Kotlin/Ktor 백엔드 특화 코딩 에이전트. [pi-mono](https://github.com/mariozechner/pi-mono) SDK 기반.
