@@ -24,7 +24,7 @@ describe("getPiSamHeaderLines", () => {
 		assert.ok(metaLine.includes("v0.1.0"));
 	});
 
-	it("compact 블록형 로고 제약을 만족해야 한다", () => {
+	it("compact 로고 제약을 만족해야 한다", () => {
 		const lines = getPiSamHeaderLines("0.1.0");
 		const logoLines = lines.slice(0, 3);
 
@@ -32,16 +32,17 @@ describe("getPiSamHeaderLines", () => {
 		assert.ok(logoLines.every((line) => line.length >= 20), "로고 폭은 최소 20자여야 함");
 		assert.ok(logoLines.every((line) => line.length <= 28), "로고 폭은 28자 이하여야 함");
 		assert.ok(
-			logoLines.every((line) => line.includes("█") || line.includes("▀")),
-			"모든 로고 라인에 블록 문자 포함 필요",
+			logoLines.every((line) => line.includes("╔") || line.includes("╠") || line.includes("╩")),
+			"모든 로고 라인에 이중선 문자 포함 필요",
 		);
 	});
 
-	it("대문자 스타일 로고는 S 패턴이 명확해야 한다", () => {
+	it("로고에 PI-SAM 각 글자가 표현되어야 한다", () => {
 		const lines = getPiSamHeaderLines("0.1.0");
-		const [line1, line2] = lines;
+		const joined = lines.slice(0, 3).join("\n");
 
-		assert.ok((line1 ?? "").includes("█▀▀"), "S 상단 패턴(█▀▀) 필요");
-		assert.ok((line2 ?? "").includes("▀▄▄"), "S 하단 패턴(▀▄▄) 필요");
+		assert.ok(joined.includes("╔═╗"), "P 상단 패턴 필요");
+		assert.ok(joined.includes("╚═╗"), "S 패턴 필요");
+		assert.ok(joined.includes("╔╦╗"), "M 상단 패턴 필요");
 	});
 });
