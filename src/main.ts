@@ -14,7 +14,7 @@ import { join } from "path";
 import { APP_NAME, VERSION, getAgentDir } from "./config.js";
 import { getSystemPrompt } from "./system-prompt.js";
 import { kotlinGuardHook, ktorHelperHook } from "./hooks/index.js";
-import { workflowExtension, brandingHeaderExtension, minimalReadRendererExtension, customToolsExtension } from "./extensions/index.js";
+import { workflowExtension, brandingHeaderExtension, minimalReadRendererExtension, customToolsExtension, zaiLoginCommandExtension } from "./extensions/index.js";
 import type { WorkflowContext } from "./workflows/types.js";
 
 interface ParsedArgs {
@@ -94,6 +94,7 @@ ${chalk.bold("Workflow Commands (interactive mode):")}
   /autopilot <task>         Autonomous explore→plan→execute→verify pipeline
   /plan <task>              Plan with user approval, then execute→verify
   /review <specialty|all>   Specialist review (security|test|architecture|performance)
+  /zai-login                Z.AI API key login (open page + validate + save)
 
 ${chalk.bold("Examples:")}
   ${APP_NAME}                                    Interactive mode
@@ -181,6 +182,7 @@ export async function main(args: string[]) {
 			brandingHeaderExtension,
 			minimalReadRendererExtension,
 			customToolsExtension(cwd, agentDir),
+			zaiLoginCommandExtension,
 		],
 		appendSystemPrompt: getSystemPrompt("", cwd),
 	});

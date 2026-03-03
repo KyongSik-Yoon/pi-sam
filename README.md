@@ -74,6 +74,20 @@ export GEMINI_API_KEY=...
 
 브라우저에서 인증 후 `~/.pi-sam/agent/auth.json`에 토큰이 저장됩니다. SDK가 토큰 리프레시를 자동 처리합니다.
 
+### Z.AI API 키 로그인 (oh-my-pi 스타일)
+
+Z.AI는 OAuth 대신 API 키를 사용합니다. 인터랙티브 모드에서 아래 명령으로 키를 저장할 수 있습니다.
+
+```
+> /zai-login
+```
+
+동작:
+1. Z.AI API 키 페이지 URL을 안내
+2. 키 입력 프롬프트 표시
+3. `chat/completions`로 키 유효성 검증
+4. `~/.pi-sam/agent/auth.json`에 `api_key`로 저장
+
 모델 변경: `/model` 또는 `Ctrl+P`
 
 ## 워크플로우 명령어
