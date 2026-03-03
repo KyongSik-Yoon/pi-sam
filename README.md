@@ -1,8 +1,6 @@
-```
-  ╔═╗ ╦   ╔═╗ ╔═╗ ╔╦╗
-  ╠═╝ ║ ─ ╚═╗ ╠═╣ ║║║
-  ╩   ╩   ╚═╝ ╩ ╩ ╩ ╩
-```
+<p align="center">
+  <img src="assets/logo.svg" alt="PI-SAM" width="360">
+</p>
 
 # pi-sam
 
