@@ -15,7 +15,7 @@
 	],
 	"scripts": {
 		"clean": "rm -rf dist",
-		"build": "npm run clean && tsc && npm run copy-agents && npm run copy-skills",
+		"build": "npm run clean && tsc && chmod +x dist/cli.js && npm run copy-agents && npm run copy-skills",
 		"copy-agents": "mkdir -p dist/agents/bundled && cp src/agents/bundled/*.md dist/agents/bundled/",
 		"copy-skills": "cd src/skills/bundled && for d in */; do mkdir -p ../../../dist/skills/bundled/$d && cp ${d}SKILL.md ../../../dist/skills/bundled/$d; done",
 		"dev": "tsx src/cli.ts",
