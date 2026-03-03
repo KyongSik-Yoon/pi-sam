@@ -1,3 +1,4 @@
+import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 import { discoverSkills, getSkill } from "../skills/index.js";
@@ -12,6 +13,20 @@ const SkillParams = Type.Object({
 		}),
 	),
 });
+
+export function summarizeSkillToolResultForDisplay(details: unknown): string {
+	if (!details || typeof details !== "object") return "";
+
+	const action = Reflect.get(details, "action");
+	if (action !== "invoke") return "";
+
+	const skill = Reflect.get(details, "skill");
+	if (typeof skill === "string" && skill.trim().length > 0) {
+		return `Using skill: ${skill}`;
+	}
+
+	return "Using skill";
+}
 
 /**
  * Create a tool that lets the LLM discover and invoke superpowers skills.
@@ -89,6 +104,10 @@ export function createSkillTool(cwd: string, agentDir: string): ToolDefinition<t
 				],
 				details: { action: "invoke", skill: skill.name, source: skill.source, path: skill.filePath },
 			};
+		},
+		renderResult(result) {
+			const summary = summarizeSkillToolResultForDisplay(result.details);
+			return new Text(summary, 0, 0);
 		},
 	};
 }

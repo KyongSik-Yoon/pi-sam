@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { join } from "node:path";
-import { createSkillTool } from "./skill-tool.js";
+import { createSkillTool, summarizeSkillToolResultForDisplay } from "./skill-tool.js";
 
 describe("skill tool output", () => {
 	it("invoke는 제목과 메타 정보만 반환해야 한다", async () => {
@@ -49,5 +49,17 @@ describe("skill tool output", () => {
 		assert.match(text, /^# Available Skills/m);
 		assert.match(text, /^- .+ \| source: .+ \| path: .+/m);
 		assert.doesNotMatch(text, /^- \*\*.+\*\*: /m);
+	});
+});
+
+describe("skill tool display summary", () => {
+	it("invoke 결과는 스킬 이름만 보여줘야 한다", () => {
+		const output = summarizeSkillToolResultForDisplay({ action: "invoke", skill: "requesting-code-review" });
+		assert.equal(output, "Using skill: requesting-code-review");
+	});
+
+	it("list 결과는 표시하지 않아야 한다", () => {
+		const output = summarizeSkillToolResultForDisplay({ action: "list", count: 14 });
+		assert.equal(output, "");
 	});
 });
