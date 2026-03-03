@@ -16,7 +16,7 @@ import { APP_NAME, VERSION, getAgentDir } from "./config.js";
 import { getSystemPrompt } from "./system-prompt.js";
 import { createK8sTool, createGradleTool, createDockerTool, createSkillTool } from "./tools/index.js";
 import { kotlinGuardHook, ktorHelperHook } from "./hooks/index.js";
-import { workflowExtension, brandingHeaderExtension } from "./extensions/index.js";
+import { workflowExtension, brandingHeaderExtension, minimalReadRendererExtension } from "./extensions/index.js";
 import type { WorkflowContext } from "./workflows/types.js";
 
 interface ParsedArgs {
@@ -189,6 +189,7 @@ export async function main(args: string[]) {
 			ktorHelperHook(cwd),
 			workflowExtension(workflowCtx),
 			brandingHeaderExtension,
+			minimalReadRendererExtension,
 		],
 		appendSystemPrompt: getSystemPrompt("", cwd),
 	});
