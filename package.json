@@ -21,6 +21,7 @@
 		"dev": "tsx src/cli.ts",
 		"start": "node dist/cli.js",
 		"pack:dry-run": "npm pack --dry-run",
+		"sync-skills": "rm -rf /tmp/superpowers-sync && git clone --depth 1 https://github.com/obra/superpowers.git /tmp/superpowers-sync && rm -rf src/skills/bundled && mkdir -p src/skills/bundled && for d in /tmp/superpowers-sync/skills/*/; do skill=$(basename $d) && mkdir -p src/skills/bundled/$skill && cp $d/SKILL.md src/skills/bundled/$skill/; done && rm -rf /tmp/superpowers-sync && echo \"Synced $(ls src/skills/bundled | wc -l) skills\"",
 		"prepublishOnly": "npm run build"
 	},
 	"dependencies": {
