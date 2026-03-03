@@ -86,7 +86,7 @@ ${chalk.bold("Usage:")}
 
 ${chalk.bold("Options:")}
   -m, --model <model>       Model to use (e.g. anthropic/claude-sonnet-4-6)
-  -t, --thinking <level>    Thinking level: off, low, medium, high
+  -t, --thinking <level>    Thinking level: off, low, medium, high (default: high)
   -p, --print               Non-interactive print mode
   -c, --continue            Continue most recent session
   -h, --help                Show this help
@@ -139,6 +139,7 @@ export async function main(args: string[]) {
 
 	const cwd = process.cwd();
 	const agentDir = getAgentDir();
+	const defaultThinkingLevel = parsed.thinking ?? "high";
 
 	// Auth & model registry
 	const authStorage = AuthStorage.create(join(agentDir, "auth.json"));
@@ -175,7 +176,7 @@ export async function main(args: string[]) {
 		authStorage,
 		modelRegistry,
 		model,
-		thinkingLevel: parsed.thinking ?? "off",
+		thinkingLevel: defaultThinkingLevel,
 	};
 
 	// ResourceLoader with extensions
@@ -196,7 +197,7 @@ export async function main(args: string[]) {
 		cwd,
 		agentDir,
 		model,
-		thinkingLevel: parsed.thinking ?? "off",
+		thinkingLevel: defaultThinkingLevel,
 		authStorage,
 		modelRegistry,
 		tools: createCodingTools(cwd),
