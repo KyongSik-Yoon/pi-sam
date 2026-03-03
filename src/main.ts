@@ -14,7 +14,7 @@ import {
 import { join } from "path";
 import { APP_NAME, VERSION, getAgentDir } from "./config.js";
 import { getSystemPrompt } from "./system-prompt.js";
-import { createK8sTool, createGradleTool, createDockerTool } from "./tools/index.js";
+import { createK8sTool, createGradleTool, createDockerTool, createSkillTool } from "./tools/index.js";
 import { kotlinGuardHook, ktorHelperHook } from "./hooks/index.js";
 import { workflowExtension } from "./extensions/index.js";
 import type { WorkflowContext } from "./workflows/types.js";
@@ -167,6 +167,7 @@ export async function main(args: string[]) {
 		createK8sTool(cwd),
 		createGradleTool(cwd),
 		createDockerTool(cwd),
+		createSkillTool(cwd, agentDir),
 	];
 
 	// Workflow context for extension
@@ -188,7 +189,7 @@ export async function main(args: string[]) {
 			ktorHelperHook(cwd),
 			workflowExtension(workflowCtx),
 		],
-		appendSystemPrompt: getSystemPrompt(""),
+		appendSystemPrompt: getSystemPrompt("", cwd),
 	});
 	await resourceLoader.reload();
 
