@@ -76,14 +76,21 @@ export function createSkillTool(cwd: string, agentDir: string): ToolDefinition<t
 				};
 			}
 
+			const lines = [
+				`# Skill: ${skill.name}`,
+				"",
+				`- source: ${skill.source}`,
+				`- path: ${skill.filePath ?? "(unknown)"}`,
+			];
+
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: `# Skill: ${skill.name}\n\n${skill.content}`,
+						text: lines.join("\n"),
 					},
 				],
-				details: { action: "invoke", skill: skill.name, source: skill.source },
+				details: { action: "invoke", skill: skill.name, source: skill.source, path: skill.filePath },
 			};
 		},
 	};
