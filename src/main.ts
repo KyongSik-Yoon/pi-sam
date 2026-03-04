@@ -14,7 +14,7 @@ import { join } from "path";
 import { APP_NAME, VERSION, getAgentDir } from "./config.js";
 import { getSystemPrompt } from "./system-prompt.js";
 import { kotlinGuardHook, ktorHelperHook } from "./hooks/index.js";
-import { workflowExtension, brandingHeaderExtension, minimalReadRendererExtension, customToolsExtension, zaiLoginCommandExtension } from "./extensions/index.js";
+import { workflowExtension, brandingHeaderExtension, minimalReadRendererExtension, customToolsExtension, zaiLoginCommandExtension, helpExtension } from "./extensions/index.js";
 import type { WorkflowContext } from "./workflows/types.js";
 
 interface ParsedArgs {
@@ -178,6 +178,7 @@ export async function main(args: string[]) {
 		extensionFactories: [
 			kotlinGuardHook,
 			ktorHelperHook(cwd),
+			helpExtension(),
 			workflowExtension(workflowCtx),
 			brandingHeaderExtension,
 			minimalReadRendererExtension,
